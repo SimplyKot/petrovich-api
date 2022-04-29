@@ -9,6 +9,7 @@ const morphFIO = require('./src/modules/morphFIO');
 // Подключаем модуль красивого отображения времени
 const prettyMilliseconds = require('pretty-ms');
 
+//TODO: Вычитывать из порт из окружения
 // Задаем порт сервера по умолчанию
 const PORT = process.env.PORT || 3000;
 

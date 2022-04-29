@@ -6,6 +6,12 @@ const petrovich = require('petrovich');
 const router = new Router()
 
 
+//TODO: Обратабыать ошибки:
+// 1. Нет данных
+// 2. ФИО состоит более чем из трех слов
+// 3. ФИО состоит менее чем из трех слов
+// 4. Пол не определяется (gender = androgynous)
+
 // Тело дожно содержать два параметра ФИО (fio) и падеж (case_fio)
 router.post('/', async ctx => {
   // Достаем параметры из тела
