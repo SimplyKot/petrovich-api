@@ -1,38 +1,33 @@
 const Router = require('@koa/router');
-// Подлкючаем библтотеку склонений
+// Подлкючаем библиотеку склонений
 const petrovich = require('petrovich');
-
+// Подлкючаем константы
+const { CASEARRAY, CASE_WARNING, NO_DATA_ERROR, UNKNOWN_GENDER_WARNING, NAME_ERROR } = require('../../utils/constants');
 
 const router = new Router()
 
-const caseArray = [
-  'nominative',
-  'genitive',
-  'dative',
-  'accusative',
-  'instrumental',
-  'prepositional'
-]
-
+// Функция делает первую букву слоыв заглавной, а остальные строчными
 function normalize(word) {
   return word[0].toUpperCase() + word.slice(1).toLowerCase()
 }
 
-//TODO: Обратабыать ошибки:
-// [+] 0. Обработать случай когда все буквы заглавные
-// 1. Нет данных
-// 2. ФИО состоит более чем из трех слов
-// 3. ФИО состоит менее чем из трех слов
-// 4. Пол не определяется (gender = androgynous)
-// 5. Падеж не число и не находится пределе [1-6]
-
-// Тело дожно содержать два параметра ФИО (fio) и падеж (case_fio)
+// Тело дожно содержать два параметра ФИО (fio) и падеж (caseFio)
 router.post('/', async ctx => {
+  let warning = '';
   // Достаем параметры из тела
-  const { fio, case_fio } = ctx.request.body;
+  const { fio } = ctx.request.body;
+  const caseFio = ctx.request.body.case_fio;
+
+  if (caseFio && (caseFio < 1 || caseFio > 6)) { warning = `${warning} ${CASE_WARNING}` }
+
+  // Если данных в fio нет - возвращаем ошибку с описанием
+  if (!fio) { ctx.body = NO_DATA_ERROR; return }
 
   // Режем строку на массив по пробелам
-  const fioArray = fio.split(' ');
+  const fioArray = fio.trim().split(' ');
+
+  // Если не хватает одного элементв ФИО - возвращаем ошибку с описанием
+  if (fioArray.length !== 3) { ctx.body = NAME_ERROR; return }
 
   // Готовим объект для Petrovich
   const person = {
@@ -43,7 +38,7 @@ router.post('/', async ctx => {
 
   // Берем последнюю букву отчества для определения регистра
   const lastMiddleChar = person.middle[person.middle.length - 1];
-  const isUpperCase = lastMiddleChar == lastMiddleChar.toUpperCase();
+  const isUpperCase = lastMiddleChar === lastMiddleChar.toUpperCase();
 
   // Если строчная - то нормализуем ФИО
   if (!isUpperCase) {
@@ -53,14 +48,18 @@ router.post('/', async ctx => {
   }
 
   // Склоняем (если падеж не задан - используем винительный)
-  const response = petrovich(person, caseArray[case_fio - 1] || 'genitive')
-  const responseBody = isUpperCase ? (response.last + ' ' + response.first + ' ' + response.middle).toUpperCase() : (response.last + ' ' + response.first + ' ' + response.middle)
+  const response = petrovich(person, CASEARRAY[caseFio - 1] || 'genitive')
+
+  // Если пол неясен - добавляем предупреждение
+  if (response.gender === 'androgynous') { warning = `${warning} ${UNKNOWN_GENDER_WARNING}` }
+
+  const responseBody = isUpperCase ? (`${response.last} ${response.first} ${response.middle}`).toUpperCase() : (`${response.last} ${response.first} ${response.middle}`)
 
   // Логируем проведенною работу
-  //console.log(`${fio}, [${case_fio}] -> ${response.first} ${response.middle} ${response.last}`.toUpperCase());
+  // console.log(`${fio}, [${caseFio}] -> ${response.first} ${response.middle} ${response.last}`.toUpperCase());
 
   // Возвращем обратно строку
-  ctx.body = responseBody;
+  ctx.body = responseBody + warning;
 });
 
 module.exports = router;
