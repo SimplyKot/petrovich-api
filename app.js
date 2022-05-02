@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Koa = require('koa');
 const Router = require('@koa/router');
 const bodyParser = require('koa-bodyparser');
@@ -8,9 +9,7 @@ const prettyMilliseconds = require('pretty-ms');
 // Подключаем модуль спряжения имен
 const morphFIO = require('./src/modules/morphFIO');
 
-
-// TODO: Вычитывать из порт из окружения
-// Задаем порт сервера по умолчанию
+// Если указан PORT в окружкнии, то задаем его. Если не указан - то используем 3000
 const PORT = process.env.PORT || 3000;
 
 // Фиксируем время запуска сервера
@@ -34,4 +33,4 @@ app.use(router.allowedMethods());
 app.use(router.routes())
 
 // eslint-disable-next-line no-console
-app.listen(PORT, () => console.log(`Service started on port: ${PORT}`));
+app.listen(PORT, () => console.log(`Service Petrovich started on port: ${PORT}`));
