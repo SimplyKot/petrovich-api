@@ -2,7 +2,7 @@ const Router = require('@koa/router');
 // Подлкючаем библиотеку склонений
 const petrovich = require('petrovich');
 // Подлкючаем константы
-const { CASEARRAY, CASE_WARNING, NO_DATA_ERROR, UNKNOWN_GENDER_WARNING, NAME_ERROR } = require('../../utils/constants');
+const { CASEARRAY, CASE_WARNING, NO_DATA_ERROR, UNKNOWN_GENDER_WARNING, NAME_ERROR, NOT_CYRILLIC_ERROR } = require('../../utils/constants');
 
 const router = new Router()
 
@@ -18,10 +18,14 @@ router.post('/', async ctx => {
   const { fio } = ctx.request.body;
   const caseFio = ctx.request.body.case_fio;
 
-  if (caseFio && (caseFio < 1 || caseFio > 6)) { warning = `${warning} ${CASE_WARNING}` }
-
   // Если данных в fio нет - возвращаем ошибку с описанием
   if (!fio) { ctx.body = NO_DATA_ERROR; return }
+
+  // Если в fio есть не кириллические сивмолы - возвращаем ошибку
+  if ((/[^\sа-яА-ЯёЁ]+/ig).test(fio)) { ctx.body = NOT_CYRILLIC_ERROR; return }
+
+  // Если есть case_fio, то он дожен юыть от 1 до 6
+  if (caseFio && (caseFio < 1 || caseFio > 6)) { warning = `${warning} ${CASE_WARNING}` }
 
   // Режем строку на массив по пробелам
   const fioArray = fio.trim().split(' ');
