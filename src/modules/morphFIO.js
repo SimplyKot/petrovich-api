@@ -22,7 +22,7 @@ router.post('/', async ctx => {
   if (!fio) { ctx.body = NO_DATA_ERROR; return }
 
   // Если в fio есть не кириллические сивмолы - возвращаем ошибку
-  if ((/[^\sа-яА-ЯёЁ]+/ig).test(fio)) { ctx.body = NOT_CYRILLIC_ERROR; return }
+  if ((/[^\s-а-яА-ЯёЁ]+/ig).test(fio)) { ctx.body = NOT_CYRILLIC_ERROR; return }
 
   // Если есть case_fio, то он дожен юыть от 1 до 6
   if (caseFio && (caseFio < 1 || caseFio > 6)) { warning = `${warning} ${CASE_WARNING}` }
@@ -46,9 +46,10 @@ router.post('/', async ctx => {
 
   // Если строчная - то нормализуем ФИО
   if (!isUpperCase) {
-    person.first = normalize(person.first);
     person.middle = normalize(person.middle);
-    person.last = normalize(person.last)
+    person.middle = normalize(person.middle);
+    // Если фамилия составная - разбываем ее и нормализуем каждое слово по отельности 
+    person.last = person.last.split('-').map(el => normalize(el)).join('-')
   }
 
   // Склоняем (если падеж не задан - используем винительный)
